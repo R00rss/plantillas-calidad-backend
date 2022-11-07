@@ -37,11 +37,18 @@ def insertGroupsError(nombre, tipoError, notaMaxima, notaActual, PlantillaId):
     )
     return updateQuery(query)
 
-def insertError(nombre, notaMaxima, notaActual, aplica,grupoErrorId):
+
+def insertError(nombre, notaMaxima, notaActual, aplica, grupoErrorId):
     query = "INSERT INTO errores (Nombre,MaximaNota,NotaActual,Aplica,GrupoErrorId) VALUES ('{}','{}',{},{},{})".format(
-        nombre, notaMaxima, notaActual,aplica, grupoErrorId
+        nombre, notaMaxima, notaActual, aplica, grupoErrorId
     )
     return updateQuery(query)
+
+
 def insertPlantilla(nombre, trxId):
-    query = "INSERT INTO calidadPlantillas (nombre,TrxId) VALUES ('{}', {})".format(nombre,trxId)
+    query = "INSERT INTO calidadPlantillas (nombre,TrxId) VALUES ('{}', {})".format(
+        nombre, trxId
+    )
     return updateQuery(query)
+
+

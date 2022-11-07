@@ -5,6 +5,9 @@ class plantillaModel(BaseModel):
     nombre: str
     trxId: int
 
+class idPlantillaModel(BaseModel):
+    idPlantilla: int
+
 
 class createPlantillaModel(BaseModel):
     idTrx: int

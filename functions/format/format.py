@@ -17,7 +17,12 @@ def formatItem(item):
 
 
 def formatDataUserDB2(user):
+    # "SELECT IdUser,Id,Password,Name1,Email,UserGroup FROM user WHERE STATE = 1"
     return {
         "id": user[0],
-        "username": user[4],
+        # "username": user[1],
+        # "password": user[2],
+        "name": user[3],
+        "email": user[4],
+        "rol": user[5]
     }

@@ -1,5 +1,17 @@
+from datetime import date
 from functions.DB.format import formatSimpleResult
 from functions.DB.queries import generalQuery, updateQuery
+
+
+def semaforizacion(total):
+    if 0 <= total and total < 70:
+        return "Malo"
+    if 70 <= total and total < 85:
+        return "Regular"
+    if 85 <= total and total < 89:
+        return "Bueno"
+    if 89 <= total and total <= 100:
+        return "Excelente"
 
 
 def getMetaByIdTrx(idTrx):
@@ -8,47 +20,53 @@ def getMetaByIdTrx(idTrx):
     return {"meta": formatSimpleResult(result)[0]}
 
 
-def saveResults(listResults):
-    def semaforizacion(total):
-        if 0 <= total and total < 70:
-            return "Malo"
-        if 70 <= total and total < 85:
-            return "Regular"
-        if 85 <= total and total < 89:
-            return "Bueno"
-        if 89 <= total and total <= 100:
-            return "Excelente"
-    queryUpdateAplica = "UPDATE resultados SET Aplica = CASE ID"
-    queryUpdateNota = "UPDATE resultados SET Nota = CASE ID"
-    totalIds = ""
+def saveResults(listResults, listOriginalResults):
     response = {}
-    subTotalCal = 0
-    subTotalMax = 0
-    for result in listResults:
-        idPlantilla = result["idPlantilla"]
-        if result["aplica"] == 1:
-            subTotalCal += result["notaActual"]
-            subTotalMax += result["notaMaxima"]
+    response["changes"] = False
+    if listResults != listOriginalResults:
+        response["changes"] = True
+        queryUpdateAplica = "UPDATE resultados SET Aplica = CASE ID"
+        queryUpdateNota = "UPDATE resultados SET Nota = CASE ID"
 
-        queryUpdateNota += " WHEN {} THEN {} ".format(
-            result["idResultado"], result["notaActual"]
-        )
-        queryUpdateAplica += " WHEN {} THEN {} ".format(
-            result["idResultado"], result["aplica"]
-        )
-        totalIds += str(result["idResultado"]) + ","
+        totalIdsNotaActual = ""
+        totalIdsAplica = ""
+        for i in range(len(listResults)):
+            idPlantilla = listResults[i]["idPlantilla"]
+            if (
+                listOriginalResults[i]["idResultado"] == listResults[i]["idResultado"]
+            ):  # verifica si es el mismo resultado
+                if (
+                    listOriginalResults[i]["notaActual"] != listResults[i]["notaActual"]
+                ):  # si hay cambios en la nota actual
+                    queryUpdateNota += " WHEN {} THEN {} ".format(
+                        listResults[i]["idResultado"], listResults[i]["notaActual"]
+                    )
+                    totalIdsNotaActual += str(listResults[i]["idResultado"]) + ","
+                    print(listOriginalResults[i]["notaActual"])
+                    print(listResults[i]["notaActual"])
+                    print(totalIdsNotaActual)
+                    print(queryUpdateNota)
+                if (
+                    listOriginalResults[i]["aplica"] != listResults[i]["aplica"]
+                ):  # si hay cambios en el aplica
 
-    notaFinal = round((subTotalCal / subTotalMax) * 100, 2)
-    semaforizacionCalidad = semaforizacion(notaFinal)
-    results = {
-        "notaFinal": notaFinal,
-        "semaforizacion": semaforizacionCalidad,
-        "idPlantilla": idPlantilla,
-    }
+                    queryUpdateAplica += " WHEN {} THEN {} ".format(
+                        listResults[i]["idResultado"], listResults[i]["aplica"]
+                    )
+                    totalIdsAplica += str(listResults[i]["idResultado"]) + ","
+                    print(listOriginalResults[i]["aplica"])
+                    print(listResults[i]["aplica"])
+                    print(totalIdsAplica)
+                    print(queryUpdateAplica)
 
-    queryUpdateNota += " ELSE 0 END WHERE ID IN (" + totalIds[:-1] + ");"
-    queryUpdateAplica += " ELSE 0 END WHERE ID IN (" + totalIds[:-1] + ");"
-
-    response["queryUpdateNota"] = updateQuery(queryUpdateNota)
-    response["queryUpdateAplica"] = updateQuery(queryUpdateAplica)
+        queryUpdateNota += " ELSE 0 END WHERE ID IN (" + totalIdsNotaActual[:-1] + ");"
+        queryUpdateAplica += " ELSE 0 END WHERE ID IN (" + totalIdsAplica[:-1] + ");"
+        if totalIdsNotaActual != "":
+            response["queryUpdateNota"] = updateQuery(queryUpdateNota)
+        if totalIdsAplica != "":
+            response["queryUpdateAplica"] = updateQuery(queryUpdateAplica)
+        response["queries"] = {
+            "updateNota": queryUpdateNota,
+            "updateAplica": queryUpdateAplica,
+        }
     return response
